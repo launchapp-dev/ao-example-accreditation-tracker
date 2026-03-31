@@ -1,0 +1,33 @@
+# Accrediting body configuration
+# Update this file before running accreditation-pipeline
+
+accreditor:
+  name: "Higher Learning Commission"
+  abbreviation: "HLC"
+  website: "https://www.hlcommission.org"
+  standards_url: "https://www.hlcommission.org/Policies/criteria-and-core-components.html"
+  standards_version: "2023"
+
+  # Criteria that are "core" — missing evidence here = adverse action risk
+  core_standards:
+    - "1"   # Mission
+    - "2"   # Integrity: Ethical and Responsible Conduct
+    - "3"   # Teaching and Learning: Quality, Resources, and Support
+    - "4"   # Teaching and Learning: Evaluation and Improvement
+    - "5"   # Resources, Planning, and Institutional Effectiveness
+
+  # Evidence recency requirement (years)
+  evidence_max_age_years: 5
+
+  # Required report format
+  report_format:
+    max_pages: 300
+    citation_style: "APA"
+    required_sections:
+      - executive_summary
+      - standards_narrative
+      - evidence_index
+      - appendices
+
+  # Submission portal
+  submission_portal: "https://open.hlcommission.org"

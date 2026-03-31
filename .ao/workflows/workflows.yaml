@@ -1,0 +1,68 @@
+default_workflow_ref: accreditation-pipeline
+
+workflows:
+  - id: accreditation-pipeline
+    name: "Accreditation Evidence Pipeline"
+    description: "Full pipeline: scrape standards, map requirements, collect evidence, gap analysis, remediation planning, self-study report compilation, and provost approval."
+    phases:
+      - scrape-standards
+      - map-requirements
+      - inventory-evidence
+      - assess-evidence-completeness:
+          on_verdict:
+            sufficient:
+              target: analyze-gaps
+            needs-more:
+              target: collect-additional-evidence
+            missing:
+              target: collect-additional-evidence
+      - collect-additional-evidence
+      - analyze-gaps:
+          on_verdict:
+            ready:
+              target: compile-self-study
+            gaps-found:
+              target: plan-remediation
+            critical-gaps:
+              target: escalate-critical-gaps
+          max_rework_attempts: 3
+      - plan-remediation
+      - escalate-critical-gaps
+      - compile-self-study
+      - provost-approval
+      - finalize-submission
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: false
+        cleanup_worktree: true
+
+  - id: weekly-readiness-check
+    name: "Weekly Readiness Check"
+    description: "Calculate deadline status and update the leadership readiness dashboard with current evidence, remediation, and timeline metrics."
+    phases:
+      - calculate-deadline-status
+      - update-readiness-dashboard
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: true
+        cleanup_worktree: true
+
+  - id: monthly-progress-report
+    name: "Monthly Progress Report"
+    description: "Aggregate monthly accreditation metrics, assess trend, and generate comprehensive leadership progress report."
+    phases:
+      - calculate-monthly-metrics
+      - generate-monthly-report
+    post_success:
+      merge:
+        strategy: squash
+        target_branch: main
+        create_pr: true
+        auto_merge: true
+        cleanup_worktree: true

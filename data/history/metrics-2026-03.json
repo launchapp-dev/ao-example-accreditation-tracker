@@ -1,0 +1,35 @@
+{
+  "month": "2026-03",
+  "calculated_date": "2026-03-30",
+  "days_to_submission": 336,
+  "evidence": {
+    "completion_pct": 0,
+    "verdict": null,
+    "items_collected": 0,
+    "items_total": 0,
+    "pct_change_vs_prior_month": 0.0
+  },
+  "remediation": {
+    "completion_pct": 0.0,
+    "items_total": 0,
+    "items_completed": 0,
+    "items_in_progress": 0,
+    "items_overdue": 0,
+    "pct_change_vs_prior_month": 0.0
+  },
+  "gaps": {
+    "verdict": null,
+    "critical": 0,
+    "significant": 0,
+    "minor": 0,
+    "total": 0
+  },
+  "report": {
+    "chapters_compiled": 0
+  },
+  "timeline": {
+    "adherence_score": 90.0,
+    "overdue_milestones": 0,
+    "at_risk_milestones": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "analysis_date": null,
+  "verdict": null,
+  "overall_completion_pct": 0,
+  "reasoning": null,
+  "critical_gaps": [],
+  "significant_gaps": [],
+  "minor_gaps": [],
+  "strengths": [],
+  "top_risks": [],
+  "_note": "Populated by analyze-gaps phase"
+}

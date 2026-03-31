@@ -1,0 +1,368 @@
+phases:
+  # ─── accreditation-pipeline phases ────────────────────────────────────────
+
+  scrape-standards:
+    mode: agent
+    agent: standards-mapper
+    directive: |
+      Read config/accreditor-profile.yaml to identify the accrediting body, the standards version,
+      and the URL of the current standards documentation.
+
+      Use Playwright to navigate to the accreditor's website and extract:
+      1. The complete list of standards/criteria (titles and descriptions)
+      2. For each criterion: required evidence types, acceptable document formats, and submission guidelines
+      3. Any footnotes or supplemental guidance about evidence expectations
+      4. Any recent updates or changes to standards (check the "What's New" or "Updates" sections)
+
+      This is a one-time scrape — be thorough. Navigate through all standards pages and capture
+      the full hierarchy (standards → criteria → evidence requirements).
+
+      Write the raw extracted requirements to data/requirements-matrix.json.
+      Return JSON with: accreditor, standards_count, criteria_count, scrape_date
+    capabilities:
+      mutates_state: true
+      writes_files: true
+    output_contract:
+      required_fields:
+        - accreditor
+        - standards_count
+        - criteria_count
+
+  map-requirements:
+    mode: agent
+    agent: standards-mapper
+    directive: |
+      Read data/requirements-matrix.json (just scraped) and config/institution-profile.yaml.
+
+      For each criterion in the requirements matrix:
+      1. Map it to the responsible institutional unit (e.g., "Standard 4.A → Office of Academic Affairs")
+      2. Specify the exact evidence types required (policy documents, assessment reports, syllabi, etc.)
+      3. Identify any cross-references (criteria that share evidence or depend on each other)
+      4. Flag core vs supplemental criteria based on the accreditor's weightings
+      5. Set initial deadline targets for each criterion based on the submission timeline in
+         config/institution-profile.yaml
+
+      Use sequential-thinking to reason through complex multi-standard dependencies.
+      Update data/requirements-matrix.json with the full mapping.
+      Also generate a human-readable summary to reports/standards-map.md
+
+      Return JSON with: total_criteria, core_criteria_count, responsible_units (array), mapping_complete
+    capabilities:
+      mutates_state: true
+      writes_files: true
+    output_contract:
+      required_fields:
+        - total_criteria
+        - core_criteria_count
+        - mapping_complete
+
+  inventory-evidence:
+    mode: agent
+    agent: evidence-collector
+    directive: |
+      Read data/requirements-matrix.json for all required evidence items.
+      Scan the evidence/ directory recursively to find all existing documents.
+      Read config/institution-profile.yaml for the accreditor's evidence recency requirements.
+
+      For each required evidence item in the matrix:
+      1. Search evidence/ for documents that satisfy this requirement
+      2. Check the document's last modified date against the recency requirement
+      3. Assess completeness (does it contain all required components?)
+      4. Record status: collected / outdated / incomplete / missing
+
+      Calculate:
+      - Overall completion percentage
+      - Completion per standard
+      - List of missing evidence items, prioritized by criterion weight
+
+      Write the full inventory to data/evidence-inventory.json.
+      Return JSON with overall summary (do NOT include the verdict field yet — that comes next phase).
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  assess-evidence-completeness:
+    mode: agent
+    agent: evidence-collector
+    directive: |
+      Read data/evidence-inventory.json (just completed) and data/requirements-matrix.json.
+
+      Apply the evidence sufficiency thresholds:
+      - sufficient: ≥90% overall completion AND all core criteria have at least one current document
+      - needs-more: 70-89% overall, OR any core criterion has only outdated/incomplete evidence
+      - missing: <70% overall, OR any critical core criterion has no evidence at all
+
+      Update the verdict field in data/evidence-inventory.json with your assessment.
+
+      Return JSON with:
+      - verdict: "sufficient" | "needs-more" | "missing"
+      - overall_completion_pct: float
+      - core_criteria_complete: int
+      - core_criteria_total: int
+      - top_missing_items: array of the 5 highest-priority missing evidence items
+    decision_contract:
+      required_fields:
+        - verdict
+        - overall_completion_pct
+
+  collect-additional-evidence:
+    mode: agent
+    agent: evidence-collector
+    directive: |
+      Read data/evidence-inventory.json to get the list of missing and incomplete evidence items.
+      Read data/requirements-matrix.json for requirements details.
+      Read config/institution-profile.yaml for department contact information.
+
+      For each missing or incomplete evidence item (prioritize core criteria first):
+      1. Generate a collection request document at evidence/requests/<criterion-id>-request.md
+         that describes exactly what is needed, the format required, and why it matters
+      2. Create a placeholder file at evidence/pending/<criterion-id>-pending.md with
+         the collection request details so the gap analyst can see what's in progress
+      3. Update data/evidence-inventory.json — mark items as "requested" status
+
+      After creating all request documents:
+      - Update data/evidence-inventory.json status fields
+      - Write a collection status report to reports/evidence-collection-status.md
+
+      Return JSON with: items_requested (int), requests_generated (array of file paths), collection_status
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  analyze-gaps:
+    mode: agent
+    agent: gap-analyst
+    directive: |
+      Read data/requirements-matrix.json, data/evidence-inventory.json, and
+      config/institution-profile.yaml (for submission deadline and institutional context).
+
+      Perform comprehensive gap analysis:
+      1. For each standard: calculate completion percentage and identify gaps
+      2. Classify each gap: critical / significant / minor
+         - Critical: core accreditation criterion, no current evidence exists
+         - Significant: important criterion, evidence incomplete or outdated
+         - Minor: supplemental criterion, gaps are noted but not decisive
+      3. Use sequential-thinking to trace multi-criterion dependencies
+         (a single missing policy document can create gaps across 5+ criteria)
+      4. Identify cross-cutting weaknesses (e.g., "assessment documentation is weak across all standards")
+      5. Assess overall readiness and assign verdict
+
+      Apply verdict thresholds:
+      - ready: ≥95% completion, zero critical gaps
+      - gaps-found: 80-94% completion, no critical gaps in core criteria
+      - critical-gaps: <80% completion OR any critical gap in a core criterion
+
+      Write full analysis to data/gap-analysis.json.
+      Return JSON with: verdict, overall_completion_pct, critical_gaps count, significant_gaps count, reasoning
+    decision_contract:
+      required_fields:
+        - verdict
+        - overall_completion_pct
+        - reasoning
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  plan-remediation:
+    mode: agent
+    agent: remediation-planner
+    directive: |
+      Read data/gap-analysis.json for all identified gaps.
+      Read config/institution-profile.yaml for the submission deadline and department contacts.
+      Read data/requirements-matrix.json for evidence requirements detail.
+
+      Create a comprehensive remediation plan:
+      1. For each critical gap: assign an action, responsible unit, and deadline ≥60 days before submission
+      2. For each significant gap: assign action, responsible unit, deadline ≥30 days before submission
+      3. For each minor gap: assign action, responsible unit, deadline ≥14 days before submission
+      4. Look for high-leverage actions that close multiple gaps simultaneously
+      5. Estimate effort in person-hours for each item
+      6. Flag any items requiring external review or board approval (these need extra lead time)
+
+      Write the complete plan to data/remediation-plan.json.
+      Generate a human-readable action tracker to reports/remediation-actions.md.
+      Include a gantt-style timeline (ASCII) showing all remediation items on a timeline.
+
+      Return JSON with: total_items, critical_items, estimated_total_hours, earliest_deadline, plan_summary
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  escalate-critical-gaps:
+    mode: agent
+    agent: gap-analyst
+    directive: |
+      The gap analysis has identified critical gaps that require immediate institutional leadership
+      attention. These gaps pose a direct risk to accreditation status.
+
+      Read data/gap-analysis.json for the full list of critical gaps.
+      Read config/institution-profile.yaml for institutional leadership contacts.
+
+      Prepare an escalation briefing:
+      1. Write a clear, concise executive briefing to reports/critical-gaps-escalation.md:
+         - What is at stake (specific accreditation criteria at risk)
+         - Each critical gap: what is missing, which standard it affects, risk level
+         - Recommended emergency actions with timelines
+         - Decision points that require provost/president/board involvement
+      2. Update data/gap-analysis.json with escalation_date and escalation_status fields
+      3. Create an escalation tracking record at data/escalation-log.json
+
+      Use sequential-thinking to assess which critical gaps have feasible remediation paths
+      vs which may require formal response letters to the accreditor.
+
+      Return JSON with: gaps_escalated (int), briefing_path, requires_board_action (bool), recommended_timeline_days
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  compile-self-study:
+    mode: agent
+    agent: report-compiler
+    directive: |
+      Compile the comprehensive self-study report.
+
+      Read:
+      - data/requirements-matrix.json (criteria and evidence requirements)
+      - data/evidence-inventory.json (what evidence has been collected)
+      - data/gap-analysis.json (any remaining gaps and how they're being addressed)
+      - data/remediation-plan.json (remediation progress, if available)
+      - config/accreditor-profile.yaml (required report format and structure)
+      - config/institution-profile.yaml (institutional context)
+      - All documents in evidence/ directory
+
+      For each standard and criterion:
+      1. Draft narrative response (300-500 words) citing specific evidence documents
+      2. Acknowledge any gaps and describe remediation actions underway
+      3. Highlight institutional strengths genuinely demonstrated by evidence
+
+      Write:
+      - reports/self-study/00-executive-summary.md
+      - reports/self-study/chapter-<N>-<standard-id>.md for each standard
+      - reports/self-study/evidence-index.md (all evidence citations mapped to files)
+      - reports/self-study/index.md (table of contents with page estimates)
+
+      Use sequential-thinking to ensure consistency across chapters.
+      Return JSON with: status, chapters_compiled, evidence_citations, pending_approvals, report_directory
+    capabilities:
+      mutates_state: true
+      writes_files: true
+    output_contract:
+      required_fields:
+        - status
+        - chapters_compiled
+        - evidence_citations
+
+  provost-approval:
+    mode: manual
+    directive: |
+      MANUAL APPROVAL GATE — Provost sign-off required before submission.
+
+      Review the compiled self-study report in reports/self-study/ directory.
+      Key documents to review:
+      - reports/self-study/00-executive-summary.md (overall narrative)
+      - reports/self-study/index.md (full table of contents)
+      - reports/remediation-actions.md (outstanding gap remediation)
+
+      To approve: review each chapter for accuracy, institutional voice, and evidence alignment.
+      Confirm that:
+      1. All claims are supported by cited evidence in evidence/
+      2. Areas of improvement are described honestly with credible improvement plans
+      3. The executive summary accurately represents institutional strengths and challenges
+      4. No sensitive institutional matters are disclosed inappropriately
+
+      Once approved, advance the workflow.
+      If revisions are needed, annotate specific chapters in reports/self-study/ and rework.
+
+  finalize-submission:
+    mode: command
+    command:
+      program: bash
+      args: ["-c", "bash scripts/package-submission.sh"]
+      cwd_mode: project_root
+      timeout_secs: 120
+
+  # ─── weekly-readiness-check phases ────────────────────────────────────────
+
+  calculate-deadline-status:
+    mode: command
+    command:
+      program: bash
+      args: ["-c", "bash scripts/calculate-deadline-status.sh"]
+      cwd_mode: project_root
+      timeout_secs: 60
+
+  update-readiness-dashboard:
+    mode: agent
+    agent: readiness-reviewer
+    directive: |
+      Run the weekly readiness assessment.
+
+      Read:
+      - data/evidence-inventory.json (evidence completion)
+      - data/remediation-plan.json (remediation progress)
+      - data/submission-timeline.json (milestone deadlines and current date context)
+      - data/deadline-status.json (just calculated by the script)
+      - reports/self-study/ directory (count compiled chapter files)
+
+      Calculate composite readiness score:
+      - Evidence completion (40% weight): pct of required evidence collected and current
+      - Remediation progress (30% weight): pct of remediation items marked completed
+      - Timeline adherence (20% weight): milestone compliance score from deadline-status.json
+      - Report readiness (10% weight): pct of required chapters drafted
+
+      Identify:
+      - Overdue items (past deadline, not completed)
+      - At-risk items (due within 21 days, not completed)
+      - Stalled items (in-progress for >14 days)
+
+      Write dashboard to reports/readiness-dashboard-$(date +%Y-%m-%d).md
+      Return JSON with all readiness metrics.
+    capabilities:
+      mutates_state: true
+      writes_files: true
+
+  # ─── monthly-progress-report phases ───────────────────────────────────────
+
+  calculate-monthly-metrics:
+    mode: command
+    command:
+      program: bash
+      args: ["-c", "bash scripts/calculate-monthly-metrics.sh"]
+      cwd_mode: project_root
+      timeout_secs: 90
+
+  generate-monthly-report:
+    mode: agent
+    agent: readiness-reviewer
+    directive: |
+      Generate the monthly accreditation progress report for institutional leadership.
+
+      Read:
+      - data/monthly-metrics.json (just calculated)
+      - data/evidence-inventory.json
+      - data/remediation-plan.json
+      - data/gap-analysis.json
+      - data/submission-timeline.json
+      - reports/readiness-dashboard-*.md (all weekly dashboards this month, for trend analysis)
+
+      Produce a comprehensive monthly report covering:
+      1. Month in Review (narrative: what progress was made, key milestones reached)
+      2. Evidence Collection Progress (table: per-standard completion %, month-over-month change)
+      3. Remediation Tracker (items completed this month, items overdue, items at-risk)
+      4. Timeline Health (milestone status, projected completion vs target)
+      5. Readiness Trend (composite score trend over the past 4 weekly dashboards as ASCII chart)
+      6. Next Month Priorities (3-5 most important actions to advance toward readiness)
+      7. Leadership Action Required (anything needing provost/board decision)
+
+      Write report to reports/monthly-progress-$(date +%Y-%m).md
+      Archive monthly metrics snapshot to data/history/metrics-$(date +%Y-%m).json
+
+      Return JSON with: status, report_path, readiness_level, months_to_submission (int)
+    capabilities:
+      mutates_state: true
+      writes_files: true
+    output_contract:
+      required_fields:
+        - status
+        - report_path
+        - readiness_level

@@ -1,0 +1,65 @@
+{
+  "submission_deadline": "2027-03-01",
+  "milestones": [
+    {
+      "id": "standards-mapping",
+      "name": "Standards mapping complete",
+      "target_date": "2026-04-15",
+      "status": "pending"
+    },
+    {
+      "id": "evidence-collection-kickoff",
+      "name": "Evidence collection kickoff — all departments notified",
+      "target_date": "2026-05-01",
+      "status": "pending"
+    },
+    {
+      "id": "gap-analysis",
+      "name": "Initial gap analysis complete",
+      "target_date": "2026-06-01",
+      "status": "pending"
+    },
+    {
+      "id": "remediation-plan",
+      "name": "Remediation plan approved by Provost",
+      "target_date": "2026-06-15",
+      "status": "pending"
+    },
+    {
+      "id": "evidence-collection-deadline",
+      "name": "All evidence collected and catalogued",
+      "target_date": "2026-08-01",
+      "status": "pending"
+    },
+    {
+      "id": "self-study-draft",
+      "name": "Self-study report first draft complete",
+      "target_date": "2026-10-01",
+      "status": "pending"
+    },
+    {
+      "id": "provost-review",
+      "name": "Provost review and approval",
+      "target_date": "2026-11-01",
+      "status": "pending"
+    },
+    {
+      "id": "board-review",
+      "name": "Board of Trustees review",
+      "target_date": "2026-12-01",
+      "status": "pending"
+    },
+    {
+      "id": "final-submission",
+      "name": "Final submission to accreditor",
+      "target_date": "2027-03-01",
+      "status": "pending"
+    },
+    {
+      "id": "site-visit",
+      "name": "Accreditor site visit",
+      "target_date": "2027-04-15",
+      "status": "pending"
+    }
+  ]
+}

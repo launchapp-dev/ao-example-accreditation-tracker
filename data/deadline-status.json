@@ -1,0 +1,90 @@
+{
+  "calculated_date": "2026-03-30",
+  "days_to_submission": 336,
+  "submission_deadline": "2027-03-01",
+  "adherence_score": 90.0,
+  "overdue_count": 0,
+  "at_risk_count": 1,
+  "milestones": [
+    {
+      "id": "standards-mapping",
+      "name": "Standards mapping complete",
+      "target_date": "2026-04-15",
+      "days_remaining": 16,
+      "status": "pending",
+      "risk": "at-risk"
+    },
+    {
+      "id": "evidence-collection-kickoff",
+      "name": "Evidence collection kickoff \u2014 all departments notified",
+      "target_date": "2026-05-01",
+      "days_remaining": 32,
+      "status": "pending",
+      "risk": "monitor"
+    },
+    {
+      "id": "gap-analysis",
+      "name": "Initial gap analysis complete",
+      "target_date": "2026-06-01",
+      "days_remaining": 63,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "remediation-plan",
+      "name": "Remediation plan approved by Provost",
+      "target_date": "2026-06-15",
+      "days_remaining": 77,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "evidence-collection-deadline",
+      "name": "All evidence collected and catalogued",
+      "target_date": "2026-08-01",
+      "days_remaining": 124,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "self-study-draft",
+      "name": "Self-study report first draft complete",
+      "target_date": "2026-10-01",
+      "days_remaining": 185,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "provost-review",
+      "name": "Provost review and approval",
+      "target_date": "2026-11-01",
+      "days_remaining": 216,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "board-review",
+      "name": "Board of Trustees review",
+      "target_date": "2026-12-01",
+      "days_remaining": 246,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "final-submission",
+      "name": "Final submission to accreditor",
+      "target_date": "2027-03-01",
+      "days_remaining": 336,
+      "status": "pending",
+      "risk": "on-track"
+    },
+    {
+      "id": "site-visit",
+      "name": "Accreditor site visit",
+      "target_date": "2027-04-15",
+      "days_remaining": 381,
+      "status": "pending",
+      "risk": "on-track"
+    }
+  ]
+}

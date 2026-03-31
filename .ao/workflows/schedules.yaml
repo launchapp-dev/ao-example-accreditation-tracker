@@ -1,0 +1,10 @@
+schedules:
+  - id: weekly-readiness-check
+    cron: "0 8 * * 1"
+    workflow_ref: weekly-readiness-check
+    enabled: true
+
+  - id: monthly-progress-report
+    cron: "0 9 1 * *"
+    workflow_ref: monthly-progress-report
+    enabled: true

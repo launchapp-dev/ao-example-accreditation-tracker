@@ -1,0 +1,66 @@
+# Institution configuration
+# Update before running the accreditation pipeline
+
+institution:
+  name: "Lakewood State University"
+  abbreviation: "LSU"
+  type: "public_four_year"
+  enrollment: 8400
+  location: "Springfield, IL"
+  founded: 1968
+
+  # Accreditation submission timeline
+  submission:
+    deadline: "2027-03-01"
+    self_study_draft_due: "2026-10-01"
+    evidence_collection_deadline: "2026-08-01"
+    gap_analysis_target: "2026-06-01"
+    site_visit_scheduled: "2027-04-15"
+
+  # Departments and contacts (for remediation assignment)
+  departments:
+    - id: "academic-affairs"
+      name: "Office of Academic Affairs"
+      contact_role: "Vice Provost for Academic Programs"
+      responsible_standards: ["3", "4"]
+
+    - id: "institutional-effectiveness"
+      name: "Office of Institutional Effectiveness"
+      contact_role: "Director of Institutional Research"
+      responsible_standards: ["4", "5"]
+
+    - id: "finance"
+      name: "Office of Finance and Administration"
+      contact_role: "CFO"
+      responsible_standards: ["5"]
+
+    - id: "student-affairs"
+      name: "Division of Student Affairs"
+      contact_role: "VP Student Affairs"
+      responsible_standards: ["3"]
+
+    - id: "provost"
+      name: "Provost's Office"
+      contact_role: "Provost"
+      responsible_standards: ["1", "2"]
+
+    - id: "board"
+      name: "Board of Trustees"
+      contact_role: "Board Chair"
+      responsible_standards: ["1", "2"]
+
+    - id: "library"
+      name: "University Library"
+      contact_role: "Dean of Libraries"
+      responsible_standards: ["3"]
+
+    - id: "it"
+      name: "Information Technology"
+      contact_role: "CIO"
+      responsible_standards: ["3", "5"]
+
+  # Existing accreditation history
+  last_accreditation:
+    year: 2017
+    outcome: "continued_accreditation"
+    monitoring_reports: []
